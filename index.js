@@ -1,10 +1,18 @@
 const express = require("express");
+const morgan = require("morgan");
+const bodyParser = require("body-parser");
+
 const app = express();
 const PORT = 3001;
 
-app.use(express.json());
+const bodyToken = (req, res) => JSON.stringify(req.body);
+morgan.token("body", bodyToken);
 
-const persons = [
+app.use(express.json());
+app.use(bodyParser.json());
+app.use(morgan(":method :url :status :response-time ms :body"));
+
+let persons = [
   {
     id: 1,
     name: "Arto Hellas",
@@ -27,8 +35,15 @@ const persons = [
   },
 ];
 
+const generateId = () => {
+  const time = Date.now();
+  const random = Math.floor(Math.random() * 100) + 1;
+
+  return time + random;
+};
+
 app.get("/api/persons", (req, res) => {
-  res.send(JSON.stringify(persons));
+  res.json(persons);
 });
 
 app.get("/info", (req, res) => {
@@ -45,8 +60,38 @@ app.get("/api/persons/:id", (req, res) => {
   if (person) {
     res.json(person);
   } else {
-    res.status(404).end();
+    res.status(404);
   }
+});
+
+app.delete("/api/persons/:id", (req, res) => {
+  const id = Number(req.params.id);
+  const person = persons.find((person) => person.id === id);
+
+  if (!person) {
+    return res.status(400).json({ error: "Contact not found" });
+  }
+
+  persons = persons.filter((person) => person.id !== id);
+  return res.status(204);
+});
+
+app.post("/api/persons", (req, res) => {
+  const nameExists = persons.find((person) => person.name === req.body.name);
+
+  if (nameExists) {
+    return res.status(409).json({ error: "name must be unique" });
+  }
+
+  const newPerson = {
+    id: generateId(),
+    name: req.body.name,
+    number: req.body.number,
+  };
+
+  persons = persons.concat(newPerson);
+
+  return res.status(201).json(newPerson);
 });
 
 app.listen(PORT, () => {
