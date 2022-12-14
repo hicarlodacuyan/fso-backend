@@ -4,12 +4,13 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 8080;
 
 const bodyToken = (req, res) => JSON.stringify(req.body);
 morgan.token("body", bodyToken);
 
 app.use(cors());
+app.use(express.static("dist"));
 app.use(express.json());
 app.use(bodyParser.json());
 app.use(morgan(":method :url :status :response-time ms :body"));
