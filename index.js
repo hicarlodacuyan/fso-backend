@@ -1,6 +1,7 @@
 const express = require("express");
 const morgan = require("morgan");
 const bodyParser = require("body-parser");
+const cors = require("cors");
 
 const app = express();
 const PORT = 3001;
@@ -8,6 +9,7 @@ const PORT = 3001;
 const bodyToken = (req, res) => JSON.stringify(req.body);
 morgan.token("body", bodyToken);
 
+app.use(cors());
 app.use(express.json());
 app.use(bodyParser.json());
 app.use(morgan(":method :url :status :response-time ms :body"));
@@ -73,7 +75,7 @@ app.delete("/api/persons/:id", (req, res) => {
   }
 
   persons = persons.filter((person) => person.id !== id);
-  return res.status(204);
+  return res.sendStatus(204);
 });
 
 app.post("/api/persons", (req, res) => {
