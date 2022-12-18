@@ -1,7 +1,9 @@
+require("dotenv").config()
 const express = require("express");
 const morgan = require("morgan");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const Contact = require("./models/persons")
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -38,33 +40,43 @@ let persons = [
   },
 ];
 
-const generateId = () => {
-  const time = Date.now();
-  const random = Math.floor(Math.random() * 100) + 1;
-
-  return time + random;
-};
-
 app.get("/api/persons", (req, res) => {
-  res.json(persons);
-});
-
-app.get("/info", (req, res) => {
-  res.send(`
-    <p>Phonebook has info for ${persons.length} people</p>
-    <p>${new Date()}</p>
-  `);
+  Contact.find({}).then((contact) => {
+    res.json(contact)
+  })
 });
 
 app.get("/api/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const person = persons.find((person) => person.id === id);
+  Contact.findById(req.params.id).then(contact => {
+    res.json(contact)
+  })
+});
 
-  if (person) {
-    res.json(person);
-  } else {
-    res.status(404);
+// app.get("/info", (req, res) => {
+//   res.send(`
+//     <p>Phonebook has info for ${persons.length} people</p>
+//     <p>${new Date()}</p>
+//   `);
+// });
+
+app.post("/api/persons", (req, res) => {
+  const body = req.body
+
+  if (!body.name) {
+    return res.status(400).json({ 
+      error: 'content missing' 
+    })
   }
+
+  const contact = new Contact({
+    name: body.name,
+    number: body.number,
+    date: new Date()
+  })
+
+  contact.save().then(savedContact => {
+    res.json(savedContact)
+  })
 });
 
 app.delete("/api/persons/:id", (req, res) => {
@@ -79,23 +91,6 @@ app.delete("/api/persons/:id", (req, res) => {
   return res.sendStatus(204);
 });
 
-app.post("/api/persons", (req, res) => {
-  const nameExists = persons.find((person) => person.name === req.body.name);
-
-  if (nameExists) {
-    return res.status(409).json({ error: "name must be unique" });
-  }
-
-  const newPerson = {
-    id: generateId(),
-    name: req.body.name,
-    number: req.body.number,
-  };
-
-  persons = persons.concat(newPerson);
-
-  return res.status(201).json(newPerson);
-});
 
 app.listen(PORT, () => {
   console.log(`Server is now listening on port ${PORT}`);
