@@ -11,9 +11,36 @@ mongoose.connect(URL)
     })
 
 const contactSchema = mongoose.Schema({
-    name: String,
-    number: String,
-    date: Date
+    name: {
+        type: String,
+        minLength: 3,
+        required: true
+    },
+    number: {
+        type: String,
+        validate: {
+            validator: function(value) {
+                if (typeof value !== 'string') return false;
+                
+                const parts = value.split('-');
+                if (parts.length !== 2) return false;
+                
+                const [firstPart, secondPart] = parts;
+                if (firstPart.length !== 2 && firstPart.length !== 3 || !/^\d+$/.test(secondPart)) {
+                    return false;
+                }
+                
+                return true;
+            },
+            message: 'Invalid phone number format'
+        },
+        minLength: 8,
+        required: true
+    },
+    date: {
+        type: String,
+        required: true
+    }
 })
 
 contactSchema.set("toJSON", {
